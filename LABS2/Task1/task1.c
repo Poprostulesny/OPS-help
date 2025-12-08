@@ -21,7 +21,22 @@ void sigusr1_handler(int signum)
     lastsignal=signum;
 }
 void sigchld_handler(int sigNo){
-    lastsignal=SIGCHLD;
+    pid_t pid;
+
+    while (1)
+    {
+        pid = waitpid(0, NULL, WNOHANG);
+
+        if (pid == 0)
+            return;
+
+        if (pid <= 0)
+        {
+            if (errno == ECHILD)
+                return;
+            ERR("waitpid");
+        }
+    }
 }
 void sethandler(void (*f)(int), int sigNo){
     struct sigaction act;
@@ -92,26 +107,7 @@ void main_work(int n, sigset_t oldmask)
     printf("I AM PARENT I GOT THE %dnth signal\n", numSigUsr1);
   }
   kill(-group, SIGUSR2);
- while(n>0){
-    sleep(1);
-        while(1){
-            pid_t pid = waitpid(-group,NULL,WNOHANG);
-            if(pid>0){
-              n--;
-            }
-            else if(pid==0){
-                break;
-            }
-            else if(0>=pid){
-                if(errno==ECHILD){
-                    break;
-                }
-                ERR("waitpid failed");
-            }
-        }
-
-        printf("%d  OF MY CHILDREN ARE STILL ALIVE\n",n);
-    }
+  
 
 }
 
@@ -132,7 +128,7 @@ int main(int argc, char *argv[])
     int n = atoi(argv[1]);
     main_work(n, oldmask);
     sigprocmask(SIG_UNBLOCK, &mask, NULL);
-  
+    while(wait(NULL)>0);
     printf("lala");
     exit(EXIT_SUCCESS);
 }   
