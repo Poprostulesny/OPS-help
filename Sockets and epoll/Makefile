@@ -8,6 +8,10 @@ NAME=sop-werona
 
 .PHONY: clean all
 
+ARGS ?= 10
+
+run: ${NAME}
+	env -u LD_PRELOAD ./${NAME} $(ARGS)
 all: ${NAME}
 
 ${NAME}: ${NAME}.c l7-common.h
